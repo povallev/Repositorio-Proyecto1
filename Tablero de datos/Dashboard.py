@@ -1,12 +1,80 @@
 import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output, State
+from dash import dcc, html, Input, Output, State
 import plotly.express as px
 from scipy.stats import f_oneway, pearsonr
 import pandas as pd
 import numpy as np
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+# Coeficientes del modelo
+intercept = 6.7940
+coefficients = {
+    'bathrooms': 0.1475,
+    'bedrooms': 0.0678,
+    'square_feet': 0.0002,
+    'room_density': -46.5811,
+    'state_AZ': -0.1077,
+    'state_CA': 0.6688,
+    'state_CO': 0.0976,
+    'state_CT': 0.0627,
+    'state_FL': 0.0445,
+    'state_GA': -0.1134,
+    'state_IA': -0.3262,
+    'state_IL': 0.1108,
+    'state_IN': -0.2453,
+    'state_MA': 0.5855,
+    'state_MD': 0.1892,
+    'state_MI': -0.1177,
+    'state_MN': 0.1125,
+    'state_MO': -0.2788,
+    'state_NC': -0.1805,
+    'state_ND': -0.4019,
+    'state_NE': -0.2613,
+    'state_NJ': 0.4118,
+    'state_NV': -0.1212,
+    'state_OH': -0.2319,
+    'state_OK': -0.2715,
+    'state_OR': 0.1626,
+    'state_Otros': -0.0721,
+    'state_PA': 0.0061,
+    'state_TN': -0.0478,
+    'state_TX': -0.0616,
+    'state_VA': 0.1113,
+    'state_WA': 0.3044,
+    'state_WI': -0.0286
+}
+
+# Traducción de estados
+state_translation = {
+    'state_AZ': 'Arizona',
+    'state_CA': 'California',
+    'state_CO': 'Colorado',
+    'state_CT': 'Connecticut',
+    'state_FL': 'Florida',
+    'state_GA': 'Georgia',
+    'state_IA': 'Iowa',
+    'state_IL': 'Illinois',
+    'state_IN': 'Indiana',
+    'state_MA': 'Massachusetts',
+    'state_MD': 'Maryland',
+    'state_MI': 'Michigan',
+    'state_MN': 'Minnesota',
+    'state_MO': 'Missouri',
+    'state_NC': 'North Carolina',
+    'state_ND': 'North Dakota',
+    'state_NE': 'Nebraska',
+    'state_NJ': 'New Jersey',
+    'state_NV': 'Nevada',
+    'state_OH': 'Ohio',
+    'state_OK': 'Oklahoma',
+    'state_OR': 'Oregon',
+    'state_Otros': 'Otros',
+    'state_PA': 'Pennsylvania',
+    'state_TN': 'Tennessee',
+    'state_TX': 'Texas',
+    'state_VA': 'Virginia',
+    'state_WA': 'Washington',
+    'state_WI': 'Wisconsin'
+}
 
 # Cargar el DataFrame
 df = pd.read_csv("Tablero de datos\data_limpia_3.csv")
@@ -33,48 +101,83 @@ column_names = {
 # Filtrar las columnas para excluir 'price'
 available_columns = [col for col in df.columns if col != 'price']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+# Inicializar la aplicación Dash
+app = dash.Dash(__name__, external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css'])
 server = app.server
 
+# Layout de la aplicación
 app.layout = html.Div([
-    html.H1("Análisis del Mercado Inmobiliario",
-            style={
-                'textAlign': 'center',
-                'color': '#1b4d3e',  # Verde oscuro
-                'fontFamily': 'Arial, sans-serif',
-                'fontSize': '36px',
-                'marginBottom': '30px',
-                'marginTop': '20px'
-            }),
-    
-    dcc.Dropdown(
-        id='variable-selector',
-        options=[{'label': column_names.get(col, col), 'value': col} 
-                for col in available_columns],
-        value=df.columns[0],  # Valor por defecto
-        style={
-            'width': '50%',
-            'margin': 'auto',
-            'marginBottom': '30px',
-            'color': '#1b4d3e'  # Verde oscuro
-        }
-    ),
-    
-    html.Div([
-        dcc.Graph(id='analysis-plot')
-    ], style={
-        'padding': '20px',
-        'boxShadow': '0px 0px 10px rgba(27, 77, 62, 0.2)',  # Sombra en verde
-        'borderRadius': '10px',
-        'backgroundColor': 'white',
-        'margin': '20px'
-    })
-], style={
-    'backgroundColor': '#f8f9fa',
-    'padding': '20px'
-})
+    dcc.Tabs(id='tabs', value='tab-analysis', children=[
+        # Pestaña de Análisis
+        dcc.Tab(label='Análisis', value='tab-analysis', children=[
+            html.H1("Análisis del Mercado Inmobiliario",
+                    style={
+                        'textAlign': 'center',
+                        'color': '#1b4d3e',  # Verde oscuro
+                        'fontFamily': 'Arial, sans-serif',
+                        'fontSize': '36px',
+                        'marginBottom': '30px',
+                        'marginTop': '20px'
+                    }),
+            dcc.Dropdown(
+                id='variable-selector',
+                options=[{'label': column_names.get(col, col), 'value': col} 
+                        for col in available_columns],
+                value=available_columns[0],  # Valor por defecto
+                style={
+                    'width': '50%',
+                    'margin': 'auto',
+                    'marginBottom': '30px',
+                    'color': '#1b4d3e'  # Verde oscuro
+                }
+            ),
+            html.Div([
+                dcc.Graph(id='analysis-plot')
+            ], style={
+                'padding': '20px',
+                'boxShadow': '0px 0px 10px rgba(27, 77, 62, 0.2)',  # Sombra en verde
+                'borderRadius': '10px',
+                'backgroundColor': 'white',
+                'margin': '20px'
+            })
+        ]),
+        # Pestaña de Predicción
+        dcc.Tab(label='Predicción de Precio', value='tab-prediction', children=[
+            html.H1("Formulario de Predicción de Precio",
+                    style={
+                        'textAlign': 'center',
+                        'color': '#1b4d3e',  # Verde oscuro
+                        'fontFamily': 'Arial, sans-serif',
+                        'fontSize': '36px',
+                        'marginBottom': '30px',
+                        'marginTop': '20px'
+                    }),
+            html.Div([
+                html.Label("Número de Baños (bathrooms):"),
+                dcc.Input(id='bathrooms', type='number', value=1),
+                
+                html.Label("Número de Habitaciones (bedrooms):"),
+                dcc.Input(id='bedrooms', type='number', value=1),
+                
+                html.Label("Metros Cuadrados (square_feet):"),
+                dcc.Input(id='square_feet', type='number', value=1000),
+                
+                html.Label("Estado:"),
+                dcc.Dropdown(
+                    id='state',
+                    options=[{'label': state_translation[state], 'value': state} for state in state_translation],
+                    value='state_CA'
+                ),
+                
+                html.Button('Calcular Predicción', id='predict-button', n_clicks=0),
+                
+                html.Div(id='prediction-output', style={'marginTop': '20px', 'fontSize': '20px'})
+            ], style={'padding': '20px'})
+        ])
+    ])
+])
 
-# Callback para actualizar el gráfico basado en la selección del usuario
+# Callback para la pestaña de Análisis
 @app.callback(
     Output('analysis-plot', 'figure'),
     [Input('variable-selector', 'value')]
@@ -162,5 +265,37 @@ def update_graph(selected_variable):
 
     return fig
 
+# Callback para la pestaña de Predicción
+@app.callback(
+    Output('prediction-output', 'children'),
+    [Input('predict-button', 'n_clicks')],
+    [State('bathrooms', 'value'),
+     State('bedrooms', 'value'),
+     State('square_feet', 'value'),
+     State('state', 'value')]
+)
+def predict_price(n_clicks, bathrooms, bedrooms, square_feet, state):
+    if n_clicks > 0:
+        # Calcular room_density
+        room_density = (bedrooms + bathrooms) / square_feet
+        
+        # Calcular la predicción lineal
+        prediction = (
+            intercept +
+            coefficients['bathrooms'] * bathrooms +
+            coefficients['bedrooms'] * bedrooms +
+            coefficients['square_feet'] * square_feet +
+            coefficients['room_density'] * room_density +
+            coefficients[state]
+        )
+        
+        # Corregir la transformación logarítmica (exponencial)
+        corrected_prediction = np.exp(prediction)
+        
+        # Mostrar el resultado
+        return f'Precio Predicho: ${corrected_prediction:,.2f}'
+    return "Ingrese los valores y haga clic en 'Calcular Predicción'."
+
+# Ejecutar la aplicación
 if __name__ == '__main__':
     app.run_server(debug=True)
