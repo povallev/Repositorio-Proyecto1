@@ -30,6 +30,9 @@ column_names = {
     'time': 'Tiempo'
 }
 
+# Filtrar las columnas para excluir 'price'
+available_columns = [col for col in df.columns if col != 'price']
+
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 
@@ -47,7 +50,7 @@ app.layout = html.Div([
     dcc.Dropdown(
         id='variable-selector',
         options=[{'label': column_names.get(col, col), 'value': col} 
-                for col in df.columns],
+                for col in available_columns],
         value=df.columns[0],  # Valor por defecto
         style={
             'width': '50%',
@@ -84,22 +87,26 @@ def update_graph(selected_variable):
         categories = df[selected_variable].unique()
         groups = [df[df[selected_variable] == category]['price'] for category in categories]
         f_stat, p_value = f_oneway(*groups)
+        # Determinar si el p-value es significativo
+        significance = "Significativo" if p_value < 0.05 else "No significativo"
         
         avg_prices = df.groupby(selected_variable)['price'].mean().reset_index()
         
         fig = px.bar(avg_prices, x=selected_variable, y='price',
-                     title=f'Precio Promedio por {variable_name}<br>F-stat: {f_stat:.2f}, p-value: {p_value:.4f}',
-                     labels={
-                         selected_variable: variable_name,
-                         'price': 'Precio ($)'
-                     },
-                     template='plotly_white',
-                     color_discrete_sequence=['#1b4d3e'])  # Verde oscuro principal
+                    title=f'Precio Promedio por {variable_name}<br>'
+                        f'p-value: {p_value:.4f} ({significance})',
+                    labels={
+                        selected_variable: variable_name,
+                        'price': 'Precio ($)'
+                    },
+                    template='plotly_white',
+                    color_discrete_sequence=['#1b4d3e'])  # Verde oscuro principal
     else:  # Variable numérica
         correlation, p_value = pearsonr(df[selected_variable], df['price'])
+        significance = "Significativo" if p_value < 0.05 else "No significativo"
         
         fig = px.scatter(df, x=selected_variable, y='price',
-                         title=f'Relación entre {variable_name} y Precio<br>Correlación: {correlation:.2f}, p-value: {p_value:.4f}',
+                         title=f'Relación entre {variable_name} y Precio<br>, p-value: {p_value:.4f} ({significance})',
                          labels={
                              selected_variable: variable_name,
                              'price': 'Precio ($)'
