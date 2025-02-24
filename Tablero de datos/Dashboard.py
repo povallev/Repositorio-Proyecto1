@@ -143,36 +143,99 @@ app.layout = html.Div([
         ]),
         # Pestaña de Predicción
         dcc.Tab(label='Predicción de Precio', value='tab-prediction', children=[
-            html.H1("Formulario de Predicción de Precio",
-                    style={
-                        'textAlign': 'center',
-                        'color': '#1b4d3e',  # Verde oscuro
-                        'fontFamily': 'Arial, sans-serif',
-                        'fontSize': '36px',
-                        'marginBottom': '30px',
-                        'marginTop': '20px'
-                    }),
             html.Div([
-                html.Label("Número de Baños (bathrooms):"),
-                dcc.Input(id='bathrooms', type='number', value=1),
-                
-                html.Label("Número de Habitaciones (bedrooms):"),
-                dcc.Input(id='bedrooms', type='number', value=1),
-                
-                html.Label("Metros Cuadrados (square_feet):"),
-                dcc.Input(id='square_feet', type='number', value=1000),
-                
-                html.Label("Estado:"),
-                dcc.Dropdown(
-                    id='state',
-                    options=[{'label': state_translation[state], 'value': state} for state in state_translation],
-                    value='state_CA'
-                ),
-                
-                html.Button('Calcular Predicción', id='predict-button', n_clicks=0),
-                
-                html.Div(id='prediction-output', style={'marginTop': '20px', 'fontSize': '20px'})
-            ], style={'padding': '20px'})
+                html.Div([
+                    html.Img(src='https://via.placeholder.com/800x400.png?text=Imagen+de+Casa', 
+                             style={'width': '100%', 'borderRadius': '10px', 'marginBottom': '20px'})
+                ]),
+                html.Div([
+                    html.H1("Formulario de Predicción de Precio",
+                            style={
+                                'textAlign': 'center',
+                                'color': '#1b4d3e',  # Verde oscuro
+                                'fontFamily': 'Arial, sans-serif',
+                                'fontSize': '36px',
+                                'marginBottom': '30px',
+                                'marginTop': '20px'
+                            }),
+                    html.Div([
+                        html.Label("Número de Baños (bathrooms):", style={'fontSize': '18px', 'marginBottom': '10px'}),
+                        dcc.Input(id='bathrooms', type='number', value=1, style={
+                            'width': '100%',
+                            'padding': '10px',
+                            'borderRadius': '5px',
+                            'border': '1px solid #1b4d3e',
+                            'fontSize': '16px'
+                        }),
+                    ], style={'marginBottom': '20px'}),
+                    
+                    html.Div([
+                        html.Label("Número de Habitaciones (bedrooms):", style={'fontSize': '18px', 'marginBottom': '10px'}),
+                        dcc.Input(id='bedrooms', type='number', value=1, style={
+                            'width': '100%',
+                            'padding': '10px',
+                            'borderRadius': '5px',
+                            'border': '1px solid #1b4d3e',
+                            'fontSize': '16px'
+                        }),
+                    ], style={'marginBottom': '20px'}),
+                    
+                    html.Div([
+                        html.Label("Metros Cuadrados (square_feet):", style={'fontSize': '18px', 'marginBottom': '10px'}),
+                        dcc.Input(id='square_feet', type='number', value=1000, style={
+                            'width': '100%',
+                            'padding': '10px',
+                            'borderRadius': '5px',
+                            'border': '1px solid #1b4d3e',
+                            'fontSize': '16px'
+                        }),
+                    ], style={'marginBottom': '20px'}),
+                    
+                    html.Div([
+                        html.Label("Estado:", style={'fontSize': '18px', 'marginBottom': '10px'}),
+                        dcc.Dropdown(
+                            id='state',
+                            options=[{'label': state_translation[state], 'value': state} for state in state_translation],
+                            value='state_CA',
+                            style={
+                                'width': '100%',
+                                'padding': '10px',
+                                'borderRadius': '5px',
+                                'border': '1px solid #1b4d3e',
+                                'fontSize': '16px'
+                            }
+                        ),
+                    ], style={'marginBottom': '20px'}),
+                    
+                    html.Button('Calcular Predicción', id='predict-button', n_clicks=0, style={
+                        'width': '100%',
+                        'padding': '10px',
+                        'borderRadius': '5px',
+                        'border': 'none',
+                        'backgroundColor': '#1b4d3e',
+                        'color': 'white',
+                        'fontSize': '18px',
+                        'cursor': 'pointer',
+                        'marginBottom': '20px'
+                    }),
+                    
+                    html.Div(id='prediction-output', style={
+                        'padding': '20px',
+                        'borderRadius': '5px',
+                        'backgroundColor': '#e8f1ee',
+                        'border': '1px solid #1b4d3e',
+                        'fontSize': '20px',
+                        'textAlign': 'center'
+                    })
+                ], style={
+                    'maxWidth': '600px',
+                    'margin': 'auto',
+                    'padding': '20px',
+                    'boxShadow': '0px 0px 10px rgba(27, 77, 62, 0.2)',
+                    'borderRadius': '10px',
+                    'backgroundColor': 'white'
+                })
+            ])
         ])
     ])
 ])
@@ -293,7 +356,7 @@ def predict_price(n_clicks, bathrooms, bedrooms, square_feet, state):
         corrected_prediction = np.exp(prediction)
         
         # Mostrar el resultado
-        return f'Precio Predicho: ${corrected_prediction:,.2f}'
+        return f'Predicción de Precio: ${corrected_prediction:,.2f}'
     return "Ingrese los valores y haga clic en 'Calcular Predicción'."
 
 # Ejecutar la aplicación
